@@ -19,6 +19,13 @@ describe("isLoopbackHostname", () => {
       "::1",
       "[::1]",
       "::ffff:7f00:1",
+      "0177.0.0.1",
+      "0x7f000001",
+      "2130706433",
+      "127.1",
+      "::ffff:0177.0.0.1",
+      "::ffff:0x7f000001",
+      "::ffff:127.0.0.1",
     ]) {
       expect(isLoopbackHostname(host), host).toBe(true);
     }
@@ -55,7 +62,11 @@ describe("isReservedIpAddress", () => {
   it("blocks non-public IPv4 and IPv6 address ranges", () => {
     for (const host of [
       "169.254.169.254", // cloud metadata (link-local)
+      "0xA9FEA9FE", // hex cloud metadata
+      "0251.0376.0251.0376", // octal cloud metadata (169.254.169.254)
       "10.0.0.1",
+      "012.0.0.1", // octal private IP
+      "0xA000001", // hex private IP
       "172.16.5.4",
       "192.168.1.1",
       "100.64.0.1", // CGNAT
@@ -65,6 +76,9 @@ describe("isReservedIpAddress", () => {
       "[::]",
       "::ffff:169.254.169.254", // IPv4-mapped IPv6 must not bypass the IPv4 ranges
       "::ffff:a9fe:a9fe", // hexadecimal IPv4-mapped form
+      "::ffff:0xA9FEA9FE", // IPv4-mapped hex
+      "::ffff:10.0.0.1",
+      "::ffff:012.0.0.1",
       "64:ff9b::a9fe:a9fe", // NAT64 must not translate to cloud metadata
       "192.0.2.1", // documentation
       "224.0.0.1", // multicast
@@ -90,7 +104,18 @@ describe("isReservedIpAddress", () => {
 
 describe("isPrivateOrReservedIpAddress", () => {
   it("also blocks the IPv4 and IPv6 loopback ranges", () => {
-    for (const host of ["127.0.0.1", "127.200.1.2", "::1", "[::1]", "::ffff:7f00:1"]) {
+    for (const host of [
+      "127.0.0.1",
+      "127.200.1.2",
+      "::1",
+      "[::1]",
+      "::ffff:7f00:1",
+      "0177.0.0.1",
+      "0x7f000001",
+      "2130706433",
+      "127.1",
+      "::ffff:0177.0.0.1",
+    ]) {
       expect(isPrivateOrReservedIpAddress(host), host).toBe(true);
     }
   });

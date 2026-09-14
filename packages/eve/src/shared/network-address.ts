@@ -51,15 +51,47 @@ function normalizeAddress(host: string): string {
   const zoneIndex = withoutBrackets.indexOf("%");
   const withoutZone = zoneIndex === -1 ? withoutBrackets : withoutBrackets.slice(0, zoneIndex);
 
-  // Unwrap IPv4-mapped IPv6 (`::ffff:169.254.169.254`) so the IPv4 ranges apply.
-  if (withoutZone.toLowerCase().startsWith("::ffff:")) {
-    const candidate = withoutZone.slice("::ffff:".length);
-    if (isIP(candidate) === 4) {
-      return candidate;
+  let candidate = withoutZone;
+
+  // Unwrap IPv4-mapped IPv6 prefix (`::ffff:`) so IPv4 check & canonicalization apply.
+  if (candidate.toLowerCase().startsWith("::ffff:")) {
+    const v4part = candidate.slice("::ffff:".length);
+    if (isIP(v4part) === 4) {
+      candidate = v4part;
+    } else {
+      try {
+        const u = new URL(`http://${v4part}`);
+        if (isIP(u.hostname) === 4) {
+          candidate = u.hostname;
+        }
+      } catch {
+        try {
+          const u = new URL(`http://[::ffff:${v4part}]`);
+          const h = u.hostname.replace(/^\[(.*)\]$/u, "$1");
+          if (h.toLowerCase().startsWith("::ffff:")) {
+            const inner = h.slice("::ffff:".length);
+            if (isIP(inner) === 4) {
+              candidate = inner;
+            }
+          }
+        } catch {
+          // Keep candidate
+        }
+      }
     }
   }
 
-  return withoutZone;
+  // Canonicalize IPv4 representations (octal, hex, dword, dotted-hex)
+  try {
+    const u = new URL(`http://${candidate}`);
+    let h = u.hostname;
+    if (h.startsWith("[") && h.endsWith("]")) {
+      h = h.slice(1, -1);
+    }
+    return h;
+  } catch {
+    return candidate;
+  }
 }
 
 /**
