@@ -48,11 +48,32 @@ describe("verifyHttpBasic", () => {
   });
 
   it("rejects mismatched credentials", () => {
-    const result = verifyHttpBasic(`Basic ${Buffer.from("ops:wrong", "utf8").toString("base64")}`, {
-      username: "ops",
-      password: "top-secret",
-    });
-    expect(result.ok).toBe(false);
+    const wrongPasswordResult = verifyHttpBasic(
+      `Basic ${Buffer.from("ops:wrong", "utf8").toString("base64")}`,
+      {
+        username: "ops",
+        password: "top-secret",
+      },
+    );
+    expect(wrongPasswordResult.ok).toBe(false);
+
+    const wrongUsernameResult = verifyHttpBasic(
+      `Basic ${Buffer.from("wrong:top-secret", "utf8").toString("base64")}`,
+      {
+        username: "ops",
+        password: "top-secret",
+      },
+    );
+    expect(wrongUsernameResult.ok).toBe(false);
+
+    const wrongBothResult = verifyHttpBasic(
+      `Basic ${Buffer.from("wrong:wrong", "utf8").toString("base64")}`,
+      {
+        username: "ops",
+        password: "top-secret",
+      },
+    );
+    expect(wrongBothResult.ok).toBe(false);
   });
 
   it("normalizes credentials to NFC before comparison", () => {
