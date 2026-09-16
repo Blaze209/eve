@@ -13,6 +13,7 @@ import { jsonValueSchema } from "#shared/json-schemas.js";
 import type { JsonValue } from "#shared/json.js";
 import { isInputRequest } from "#shared/input.js";
 import { tokenUsageWithCostSchema, type TokenUsage } from "#shared/token-usage.js";
+import { createHash, timingSafeEqual } from "node:crypto";
 import { readTaskIdFromInboxToken } from "#tasks/task-inbox-token.js";
 
 const ZERO_TOKEN_USAGE: TokenUsage = {
@@ -265,9 +266,18 @@ function rejectDirectTaskTurnStarted(value: unknown, token: string): Response | 
 }
 
 function rejectMismatchedTaskToken(token: string, taskId: string): Response | undefined {
-  return readTaskIdFromInboxToken(token) === taskId
+  const tokenTaskId = readTaskIdFromInboxToken(token);
+  // Compare tokenTaskId and taskId using constant-time string comparison over SHA-256 digests
+  // to prevent timing side-channel attacks during task callback authorization.
+  return tokenTaskId !== undefined && constantTimeCompare(tokenTaskId, taskId)
     ? undefined
     : Response.json({ error: "Task callback token mismatch.", ok: false }, { status: 403 });
+}
+
+function constantTimeCompare(a: string, b: string): boolean {
+  const digestA = createHash("sha256").update(a).digest();
+  const digestB = createHash("sha256").update(b).digest();
+  return timingSafeEqual(digestA, digestB);
 }
 
 function projectSessionCallbackResult(value: unknown): RuntimeSubagentChildResult | Response {
