@@ -1,13 +1,10 @@
-import { createHmac, timingSafeEqual } from "node:crypto";
+import { createHash, createHmac, timingSafeEqual } from "node:crypto";
 
-import { createLogger } from "#internal/logging.js";
 import {
   resolveLinearWebhookSecret,
   type LinearWebhookSecret,
 } from "#public/channels/linear/auth.js";
 import { isObject } from "#shared/guards.js";
-
-const log = createLogger("linear.verify");
 
 /**
  * Caller-supplied inbound webhook verifier. Use it as an alternative to
@@ -86,11 +83,7 @@ function verifyWebhookTimestamp(body: string, maxSkewMs: number): void {
 }
 
 function constantTimeCompare(a: string, b: string): boolean {
-  if (a.length !== b.length) return false;
-  try {
-    return timingSafeEqual(Buffer.from(a), Buffer.from(b));
-  } catch (error) {
-    log.debug("timingSafeEqual threw", { error });
-    return false;
-  }
+  const digestA = createHash("sha256").update(a).digest();
+  const digestB = createHash("sha256").update(b).digest();
+  return timingSafeEqual(digestA, digestB);
 }
