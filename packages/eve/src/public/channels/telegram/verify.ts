@@ -7,11 +7,7 @@
  * delegates to a caller-supplied verifier for forwarded webhooks.
  */
 
-import { timingSafeEqual } from "node:crypto";
-
-import { createLogger } from "#internal/logging.js";
-
-const log = createLogger("telegram.verify");
+import { createHash, timingSafeEqual } from "node:crypto";
 
 /** Secret token you set on Telegram's `setWebhook` call. */
 export type TelegramWebhookSecretToken = string | (() => string | Promise<string>);
@@ -78,11 +74,7 @@ export async function verifyTelegramRequest(
 }
 
 function constantTimeCompare(a: string, b: string): boolean {
-  if (a.length !== b.length) return false;
-  try {
-    return timingSafeEqual(Buffer.from(a), Buffer.from(b));
-  } catch (error) {
-    log.debug("timingSafeEqual threw", { error });
-    return false;
-  }
+  const digestA = createHash("sha256").update(a).digest();
+  const digestB = createHash("sha256").update(b).digest();
+  return timingSafeEqual(digestA, digestB);
 }
