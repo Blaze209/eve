@@ -35,6 +35,15 @@ describe("verifyTelegramRequest", () => {
     await expect(verifyTelegramRequest(mismatch, { secretToken: "secret" })).rejects.toThrow(
       /secret-token mismatch/,
     );
+
+    const lengthMismatch = new Request("https://example.com/eve/v1/telegram", {
+      body: "{}",
+      headers: { "x-telegram-bot-api-secret-token": "secret-longer-value" },
+      method: "POST",
+    });
+    await expect(verifyTelegramRequest(lengthMismatch, { secretToken: "secret" })).rejects.toThrow(
+      /secret-token mismatch/,
+    );
   });
 
   it("delegates to a custom verifier and can substitute the body", async () => {
