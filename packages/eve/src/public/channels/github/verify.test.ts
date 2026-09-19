@@ -41,6 +41,16 @@ describe("verifyGitHubRequest", () => {
     await expect(
       verifyGitHubRequest(signedRequest(body, "sha256=bad"), { webhookSecret: SECRET }),
     ).rejects.toThrow("signature mismatch");
+
+    await expect(
+      verifyGitHubRequest(
+        signedRequest(
+          body,
+          "sha256=00000000000000000000000000000000000000000000000000000000000000001",
+        ),
+        { webhookSecret: SECRET },
+      ),
+    ).rejects.toThrow("signature mismatch");
   });
 
   it("rejects when no verifier or secret is configured", async () => {

@@ -36,10 +36,15 @@ describe("verifyLinearRequest", () => {
     );
   });
 
-  it("rejects when the signature was computed with another secret", async () => {
+  it("rejects when the signature was computed with another secret or has length mismatch", async () => {
     const req = signedRequest({ secret: "wrong-secret" });
 
     await expect(verifyLinearRequest(req, { webhookSecret: SECRET })).rejects.toThrow(
+      "signature mismatch",
+    );
+
+    const reqShorterSig = signedRequest({ signature: "short" });
+    await expect(verifyLinearRequest(reqShorterSig, { webhookSecret: SECRET })).rejects.toThrow(
       "signature mismatch",
     );
   });
