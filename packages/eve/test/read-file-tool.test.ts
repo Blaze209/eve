@@ -138,6 +138,14 @@ describe("executeReadFileOnSandbox", () => {
     ).rejects.toThrow("offset must be >= 1");
   });
 
+  it("limit < 1 errors", async () => {
+    await expect(
+      runInContext({ "/workspace/foo.ts": "a\n" }, (sandbox) =>
+        executeReadFileOnSandbox(sandbox, { filePath: "/workspace/foo.ts", limit: 0 }),
+      ),
+    ).rejects.toThrow("limit must be >= 1");
+  });
+
   it("offset past EOF errors", async () => {
     await expect(
       runInContext({ "/workspace/foo.ts": "a\nb\n" }, (sandbox) =>
