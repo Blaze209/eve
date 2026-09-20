@@ -69,6 +69,10 @@ export async function executeReadFileOnSandbox(
     throw new Error(`offset must be >= 1. Received: ${effectiveOffset}.`);
   }
 
+  if (effectiveLimit < 1) {
+    throw new Error(`limit must be >= 1. Received: ${effectiveLimit}.`);
+  }
+
   // ── Read full file for fingerprinting ───────────────────────────────
   const rawContent = await sandbox.readTextFile({ path: resolvedPath });
 
