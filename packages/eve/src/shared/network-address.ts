@@ -51,11 +51,25 @@ function normalizeAddress(host: string): string {
   const zoneIndex = withoutBrackets.indexOf("%");
   const withoutZone = zoneIndex === -1 ? withoutBrackets : withoutBrackets.slice(0, zoneIndex);
 
-  // Unwrap IPv4-mapped IPv6 (`::ffff:169.254.169.254`) so the IPv4 ranges apply.
+  // Unwrap IPv4-mapped IPv6 (`::ffff:169.254.169.254` or `::ffff:7f00:1`) so the IPv4 ranges apply.
   if (withoutZone.toLowerCase().startsWith("::ffff:")) {
     const candidate = withoutZone.slice("::ffff:".length);
     if (isIP(candidate) === 4) {
       return candidate;
+    }
+    const parts = candidate.split(":");
+    const p0 = parts[0];
+    const p1 = parts[1];
+    if (
+      parts.length === 2 &&
+      p0 !== undefined &&
+      p1 !== undefined &&
+      /^[0-9a-fA-F]{1,4}$/u.test(p0) &&
+      /^[0-9a-fA-F]{1,4}$/u.test(p1)
+    ) {
+      const w1 = Number.parseInt(p0, 16);
+      const w2 = Number.parseInt(p1, 16);
+      return `${w1 >> 8}.${w1 & 0xff}.${w2 >> 8}.${w2 & 0xff}`;
     }
   }
 

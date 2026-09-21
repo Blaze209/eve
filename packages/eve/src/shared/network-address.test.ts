@@ -19,6 +19,9 @@ describe("isLoopbackHostname", () => {
       "::1",
       "[::1]",
       "::ffff:7f00:1",
+      "[::ffff:7f00:1]",
+      "::ffff:127.0.0.1",
+      "[::ffff:127.0.0.1]",
     ]) {
       expect(isLoopbackHostname(host), host).toBe(true);
     }
@@ -90,7 +93,16 @@ describe("isReservedIpAddress", () => {
 
 describe("isPrivateOrReservedIpAddress", () => {
   it("also blocks the IPv4 and IPv6 loopback ranges", () => {
-    for (const host of ["127.0.0.1", "127.200.1.2", "::1", "[::1]", "::ffff:7f00:1"]) {
+    for (const host of [
+      "127.0.0.1",
+      "127.200.1.2",
+      "::1",
+      "[::1]",
+      "::ffff:7f00:1",
+      "[::ffff:7f00:1]",
+      "::ffff:127.0.0.1",
+      "[::ffff:127.0.0.1]",
+    ]) {
       expect(isPrivateOrReservedIpAddress(host), host).toBe(true);
     }
   });
