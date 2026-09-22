@@ -1,0 +1,4 @@
+## 2025-05-18 - Constant-Time String Comparison via Hashing
+**Vulnerability:** Comparing webhook signature or secret token strings directly using length checks (`if (a.length !== b.length) return false`) or passing unhashed variable-length buffers to `crypto.timingSafeEqual` introduces a timing side-channel that leaks length and content information.
+**Learning:** `crypto.timingSafeEqual` throws an error if the input buffer lengths differ, leading developers to check length first (`a.length !== b.length`), which fails early and creates a timing side-channel.
+**Prevention:** Compute fixed-length SHA-256 digests (`createHash("sha256").update(str).digest()`) for both strings before passing them to `timingSafeEqual`. This guarantees equal-length (32-byte) buffers and constant-time execution regardless of input length or content.
