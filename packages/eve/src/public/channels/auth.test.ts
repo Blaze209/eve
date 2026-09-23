@@ -17,6 +17,7 @@ import {
   none,
   placeholderAuth,
   routeAuth,
+  escapeAuthChallengeParameter,
   type UnauthorizedChallenge,
   UnauthenticatedError,
   vercelOidc,
@@ -236,6 +237,16 @@ describe("createIpAllowList + isIpAllowed", () => {
   });
 });
 
+describe("escapeAuthChallengeParameter", () => {
+  it("escapes backslashes and double quotes", () => {
+    expect(escapeAuthChallengeParameter('a\\b"c')).toBe('a\\\\b\\"c');
+  });
+
+  it("strips newline and carriage return characters", () => {
+    expect(escapeAuthChallengeParameter("hello\r\nworld\nfoo\rbar")).toBe("helloworldfoobar");
+  });
+});
+
 describe("createUnauthorizedResponse", () => {
   it("emits a default 401 with no challenges", async () => {
     const response = createUnauthorizedResponse();
@@ -268,6 +279,19 @@ describe("createUnauthorizedResponse", () => {
 
     expect(response.headers.get("www-authenticate")).toContain('Basic realm="weather"');
     expect(response.headers.get("www-authenticate")).toMatch(/Bearer error="need \\\\\\"token\\""/);
+  });
+
+  it("sanitizes CRLF characters from challenge parameters to prevent header injection", () => {
+    const response = createUnauthorizedResponse({
+      challenges: [
+        { scheme: "Basic", parameters: { realm: "weather\r\nSet-Cookie: session=injected" } },
+      ],
+    });
+
+    const header = response.headers.get("www-authenticate");
+    expect(header).not.toContain("\r");
+    expect(header).not.toContain("\n");
+    expect(header).toBe('Basic realm="weatherSet-Cookie: session=injected"');
   });
 });
 
