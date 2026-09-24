@@ -47,11 +47,33 @@ describe("verifyHttpBasic", () => {
     }
   });
 
-  it("rejects mismatched credentials", () => {
+  it("rejects mismatched password", () => {
     const result = verifyHttpBasic(`Basic ${Buffer.from("ops:wrong", "utf8").toString("base64")}`, {
       username: "ops",
       password: "top-secret",
     });
+    expect(result.ok).toBe(false);
+  });
+
+  it("rejects mismatched username", () => {
+    const result = verifyHttpBasic(
+      `Basic ${Buffer.from("wrong:top-secret", "utf8").toString("base64")}`,
+      {
+        username: "ops",
+        password: "top-secret",
+      },
+    );
+    expect(result.ok).toBe(false);
+  });
+
+  it("rejects both mismatched username and password", () => {
+    const result = verifyHttpBasic(
+      `Basic ${Buffer.from("wrong:wrong", "utf8").toString("base64")}`,
+      {
+        username: "ops",
+        password: "top-secret",
+      },
+    );
     expect(result.ok).toBe(false);
   });
 

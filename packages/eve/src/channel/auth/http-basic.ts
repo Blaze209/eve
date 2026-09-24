@@ -20,18 +20,19 @@ export function authenticateHttpBasicStrategy(input: {
     };
   }
 
-  if (normalizeCredential(credentials.username) !== normalizeCredential(input.strategy.username)) {
-    return {
-      kind: "not-authenticated",
-    };
-  }
+  // Evaluate both username and password in constant-time hash comparisons
+  // without short-circuiting to prevent timing attacks that reveal username validity.
+  const usernameMatches = timingSafeStringEquals(
+    normalizeCredential(credentials.username),
+    normalizeCredential(input.strategy.username),
+  );
 
-  if (
-    !timingSafeStringEquals(
-      normalizeCredential(credentials.password),
-      normalizeCredential(input.strategy.password),
-    )
-  ) {
+  const passwordMatches = timingSafeStringEquals(
+    normalizeCredential(credentials.password),
+    normalizeCredential(input.strategy.password),
+  );
+
+  if (!usernameMatches || !passwordMatches) {
     return {
       kind: "not-authenticated",
     };
