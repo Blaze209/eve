@@ -43,6 +43,24 @@ describe("verifyGitHubRequest", () => {
     ).rejects.toThrow("signature mismatch");
   });
 
+  it("rejects signatures with length mismatch without timing leak or throwing", async () => {
+    const body = JSON.stringify({ action: "created" });
+
+    await expect(
+      verifyGitHubRequest(signedRequest(body, "sha256=short"), { webhookSecret: SECRET }),
+    ).rejects.toThrow("signature mismatch");
+
+    await expect(
+      verifyGitHubRequest(
+        signedRequest(
+          body,
+          "sha256=000000000000000000000000000000000000000000000000000000000000000000000000",
+        ),
+        { webhookSecret: SECRET },
+      ),
+    ).rejects.toThrow("signature mismatch");
+  });
+
   it("rejects when no verifier or secret is configured", async () => {
     await expect(verifyGitHubRequest(signedRequest("{}"), {})).rejects.toThrow(
       "GITHUB_WEBHOOK_SECRET",
