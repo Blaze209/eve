@@ -1,12 +1,10 @@
-import { createHmac, timingSafeEqual } from "node:crypto";
+import { createHmac } from "node:crypto";
 
-import { createLogger } from "#internal/logging.js";
+import { timingSafeEqualStrings } from "#internal/nitro/dev-client-address.js";
 import {
   resolveGitHubWebhookSecret,
   type GitHubWebhookSecret,
 } from "#public/channels/github/auth.js";
-
-const log = createLogger("github.verify");
 
 /**
  * Caller-supplied inbound webhook verifier. Use it as an alternative to HMAC
@@ -73,11 +71,5 @@ export function signGitHubWebhookBody(body: string, secret: string): string {
 }
 
 function constantTimeCompare(a: string, b: string): boolean {
-  if (a.length !== b.length) return false;
-  try {
-    return timingSafeEqual(Buffer.from(a), Buffer.from(b));
-  } catch (error) {
-    log.debug("timingSafeEqual threw", { error });
-    return false;
-  }
+  return timingSafeEqualStrings(a, b);
 }

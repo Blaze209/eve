@@ -44,6 +44,18 @@ describe("verifyLinearRequest", () => {
     );
   });
 
+  it("rejects signatures with length mismatch without timing leak or throwing", async () => {
+    const reqShort = signedRequest({ signature: "short" });
+    await expect(verifyLinearRequest(reqShort, { webhookSecret: SECRET })).rejects.toThrow(
+      "signature mismatch",
+    );
+
+    const reqLong = signedRequest({ signature: "a".repeat(128) });
+    await expect(verifyLinearRequest(reqLong, { webhookSecret: SECRET })).rejects.toThrow(
+      "signature mismatch",
+    );
+  });
+
   it("rejects when the signature header is missing", async () => {
     const req = signedRequest({ omitSignature: true });
 
