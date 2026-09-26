@@ -20,18 +20,17 @@ export function authenticateHttpBasicStrategy(input: {
     };
   }
 
-  if (normalizeCredential(credentials.username) !== normalizeCredential(input.strategy.username)) {
-    return {
-      kind: "not-authenticated",
-    };
-  }
+  const usernameMatch = timingSafeStringEquals(
+    normalizeCredential(credentials.username),
+    normalizeCredential(input.strategy.username),
+  );
 
-  if (
-    !timingSafeStringEquals(
-      normalizeCredential(credentials.password),
-      normalizeCredential(input.strategy.password),
-    )
-  ) {
+  const passwordMatch = timingSafeStringEquals(
+    normalizeCredential(credentials.password),
+    normalizeCredential(input.strategy.password),
+  );
+
+  if (!usernameMatch || !passwordMatch) {
     return {
       kind: "not-authenticated",
     };
