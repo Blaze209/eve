@@ -55,6 +55,17 @@ describe("verifyHttpBasic", () => {
     expect(result.ok).toBe(false);
   });
 
+  it("rejects mismatched username even if password is correct", () => {
+    const result = verifyHttpBasic(
+      `Basic ${Buffer.from("wronguser:top-secret", "utf8").toString("base64")}`,
+      {
+        username: "ops",
+        password: "top-secret",
+      },
+    );
+    expect(result.ok).toBe(false);
+  });
+
   it("normalizes credentials to NFC before comparison", () => {
     const result = verifyHttpBasic(
       `Basic ${Buffer.from("caf\u00e9:s\u00e9cret", "utf8").toString("base64")}`,
