@@ -59,9 +59,13 @@ export function createRuntimeIpAllowList(entries: readonly string[]): RuntimeIpA
  */
 export function isRuntimeIpAllowed(address: string, allowList: RuntimeIpAllowList): boolean {
   const normalizedAddress = normalizeIpAddress(address);
-  const family = getIpFamily(normalizedAddress);
+  const family = isIP(normalizedAddress);
 
-  return allowList.blockList.check(normalizedAddress, family);
+  if (family !== 4 && family !== 6) {
+    return false;
+  }
+
+  return allowList.blockList.check(normalizedAddress, family === 4 ? "ipv4" : "ipv6");
 }
 
 function normalizeIpAddress(value: string): string {

@@ -447,7 +447,12 @@ function formatChallenge(challenge: UnauthorizedChallenge): string {
 
 /** @internal Escapes a value for an HTTP auth challenge quoted string. */
 export function escapeAuthChallengeParameter(value: string): string {
-  return value.replaceAll("\\", "\\\\").replaceAll('"', '\\"');
+  // Strip control characters (including CR/LF) to prevent HTTP response header injection,
+  // then escape backslashes and quotes for the quoted-string challenge parameter.
+  return value
+    .replaceAll(/[\r\n\x00-\x1f\x7f]/gu, "")
+    .replaceAll("\\", "\\\\")
+    .replaceAll('"', '\\"');
 }
 
 function isValidOAuthIdentifierUrl(value: string): boolean {

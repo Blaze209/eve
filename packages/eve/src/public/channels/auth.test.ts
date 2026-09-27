@@ -8,6 +8,7 @@ import {
   type AuthFn,
   createIpAllowList,
   createUnauthorizedResponse,
+  escapeAuthChallengeParameter,
   extractBearerToken,
   ForbiddenError,
   httpBasic,
@@ -234,6 +235,13 @@ describe("createIpAllowList + isIpAllowed", () => {
     const allowList = createIpAllowList(["127.0.0.1"]);
     expect(isIpAllowed(null, allowList)).toBe(false);
   });
+
+  it("returns false for invalid or malformed IP address strings without throwing", () => {
+    const allowList = createIpAllowList(["127.0.0.1"]);
+    expect(isIpAllowed("invalid", allowList)).toBe(false);
+    expect(isIpAllowed("not-an-ip", allowList)).toBe(false);
+    expect(isIpAllowed("127.0.0.1; DROP TABLE", allowList)).toBe(false);
+  });
 });
 
 describe("createUnauthorizedResponse", () => {
@@ -268,6 +276,23 @@ describe("createUnauthorizedResponse", () => {
 
     expect(response.headers.get("www-authenticate")).toContain('Basic realm="weather"');
     expect(response.headers.get("www-authenticate")).toMatch(/Bearer error="need \\\\\\"token\\""/);
+  });
+
+  it("strips CRLF and control characters from challenge parameters to prevent header injection", () => {
+    const response = createUnauthorizedResponse({
+      challenges: [
+        { scheme: "Basic", parameters: { realm: "weather\r\nSet-Cookie: admin=1\x07" } },
+      ],
+    });
+
+    const header = response.headers.get("www-authenticate");
+    expect(header).toBe('Basic realm="weatherSet-Cookie: admin=1"');
+  });
+});
+
+describe("escapeAuthChallengeParameter", () => {
+  it("strips control characters and CRLF while escaping quotes and backslashes", () => {
+    expect(escapeAuthChallengeParameter('foo\r\nbar\x00"baz\\')).toBe('foobar\\"baz\\\\');
   });
 });
 
