@@ -47,6 +47,8 @@ export function verifyPasswordSessionToken(token: string | undefined, now = Date
 
   const expected = sign(`${version}.${expiresAt}`);
 
+  // Both signature strings are hashed before timingSafeEqual to ensure fixed-length
+  // buffers and prevent variable-length timing leaks.
   return timingSafeEqual(hash(signature), hash(expected));
 }
 
