@@ -12,6 +12,7 @@ import { agentTurnOutcomeWithCostSchema } from "#shared/agent-turn-outcome.js";
 import { jsonValueSchema } from "#shared/json-schemas.js";
 import type { JsonValue } from "#shared/json.js";
 import { isInputRequest } from "#shared/input.js";
+import { timingSafeEqualStrings } from "#internal/nitro/dev-client-address.js";
 import { tokenUsageWithCostSchema, type TokenUsage } from "#shared/token-usage.js";
 import { readTaskIdFromInboxToken } from "#tasks/task-inbox-token.js";
 
@@ -265,7 +266,10 @@ function rejectDirectTaskTurnStarted(value: unknown, token: string): Response | 
 }
 
 function rejectMismatchedTaskToken(token: string, taskId: string): Response | undefined {
-  return readTaskIdFromInboxToken(token) === taskId
+  const tokenTaskId = readTaskIdFromInboxToken(token);
+  // Use constant-time string comparison to prevent timing side-channel attacks on task token verification.
+  const matches = tokenTaskId !== undefined && timingSafeEqualStrings(tokenTaskId, taskId);
+  return matches
     ? undefined
     : Response.json({ error: "Task callback token mismatch.", ok: false }, { status: 403 });
 }
