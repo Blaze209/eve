@@ -319,4 +319,17 @@ describe("executeReadFileOnSandbox", () => {
     // The stamp should be under the normalized path
     expect(state.byTarget["/workspace/foo.ts"]).toBeDefined();
   });
+
+  it("normalizes path traversal segments with parent directory references", async () => {
+    const result = (await runInContext(
+      { "/workspace/subfolder/../foo.ts": "hello\nworld\n" },
+      (sandbox) =>
+        executeReadFileOnSandbox(sandbox, {
+          filePath: "/workspace/subfolder/../foo.ts",
+        }),
+    )) as ReadFileResult;
+
+    expect(result.path).toBe("/workspace/foo.ts");
+    expect(result.content).toContain("1: hello");
+  });
 });
