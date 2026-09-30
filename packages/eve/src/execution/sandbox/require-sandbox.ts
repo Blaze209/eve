@@ -2,6 +2,7 @@ import { loadContext } from "#context/container.js";
 import { SandboxKey } from "#context/keys.js";
 import type { SandboxSession } from "#public/definitions/sandbox.js";
 import { bindSandboxAbortSignal } from "#execution/sandbox/abort-bound-session.js";
+import { posix } from "node:path";
 import { resolveSandboxModelPath } from "#shared/skill-paths.js";
 
 /**
@@ -50,5 +51,12 @@ export async function resolveAbsoluteFilePath(
     );
   }
 
-  return resolvedPath;
+  const normalized = posix.normalize(resolvedPath);
+  if (!normalized.startsWith("/")) {
+    throw new Error(
+      `filePath must resolve to an absolute path. Received: "${filePath}".`,
+    );
+  }
+
+  return normalized;
 }
